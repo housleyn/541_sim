@@ -39,3 +39,14 @@ def test_right_boundary_is_correct(domain):
     expected = 2
     result = np.array([domain.right_boundary_func(y) for y in y_vals])
     assert np.allclose(result, expected, rtol=1e-5)
+
+def test_is_inside(domain):
+    assert domain.is_inside(1, 0) == True
+    assert domain.is_inside(0, 0) == True
+    assert domain.is_inside(2, 0) == True
+    assert domain.is_inside(0, -1) == False
+    assert domain.is_inside(2, -1) == False
+    assert domain.is_inside(3, 0) == False
+    assert domain.is_inside(-1, 0) == False
+    assert domain.is_inside(0, .2) == True #on boundary 
+    assert domain.is_inside(1, .15) == True #on boundary)

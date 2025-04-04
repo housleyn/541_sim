@@ -21,12 +21,19 @@ class Domain():
     def define_right_boundary(self, func):
         self.right_boundary_func = func
 
+    def is_inside(self, x, y):
+        if self.lower_boundary_func(x, y) < 0: return False  # below lower boundary
+        if self.upper_boundary_func(x, y) > 0: return False  # above upper boundary
+        if self.left_boundary_func(y, x) > x: return False   # left of left
+        if self.right_boundary_func(y, x) < x: return False  # right of right
+        return True
+
+
     def plot_domain(self, x_range, y_range):
         x = np.linspace(x_range[0], x_range[1], 200)
         y_lower = np.array([self.lower_boundary_func(xi, 0) for xi in x])
         y_upper = np.array([self.upper_boundary_func(xi, 0) for xi in x])
 
-        # vertical boundaries: get y-range from horizontal boundaries
         y_left_min = self.lower_boundary_func(x_range[0], 0)
         y_left_max = self.upper_boundary_func(x_range[0], 0)
         y_right_min = self.lower_boundary_func(x_range[1], 0)
