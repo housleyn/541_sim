@@ -1,7 +1,7 @@
 class ControlSurface:
     def __init__(self):
-        self._u = None
-        self._v = None
+        self.u = None
+        self.v = None
         self.orientation = None  # Will be set when u or v is assigned
         self.area = None
         self.position = None
