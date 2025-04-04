@@ -167,3 +167,62 @@ def test_control_surface_positions_v(mesh):
     assert np.isclose(mesh.v_faces[0, 0].position, (0.0, -0.2)).all()
     assert np.isclose(mesh.v_faces[1, 1].position, (0.1, -0.1)).all()
     assert np.isclose(mesh.v_faces[3, 2].position, (0.2, 0.1)).all()
+
+
+def test_that_indice_for_surface_and_node_are_compatible(mesh):
+    mesh.construct_nodes()
+    mesh.construct_control_surfaces()
+
+    ny, nx = mesh.shape
+
+    # u_faces: center between node[j, i] and node[j, i+1]
+    for j in range(ny):
+        for i in range(nx - 1):
+            node = mesh.nodes[j, i]
+            face = mesh.u_faces[j, i]
+            if node is not None and face is not None:
+                dx_half = 0.5 * mesh.dx
+                delta_x = abs(face.position[0] - node.position[0])
+                assert np.isclose(delta_x, dx_half)
+
+    # v_faces: center between node[j, i] and node[j+1, i]
+    for j in range(ny - 1):
+        for i in range(nx):
+            node = mesh.nodes[j, i]
+            face = mesh.v_faces[j, i]
+            if node is not None and face is not None:
+                dy_half = 0.5 * mesh.dy
+                delta_y = abs(face.position[1] - node.position[1])
+                assert np.isclose(delta_y, dy_half)
+def test_node_neighbor_positions_are_correct(mesh):
+    mesh.construct_nodes()
+    ny, nx = mesh.shape
+
+    for j in range(ny):
+        for i in range(nx - 1):
+            n1 = mesh.nodes[j, i]
+            n2 = mesh.nodes[j, i + 1]
+            if n1 is not None and n2 is not None:
+                dx_actual = n2.position[0] - n1.position[0]
+                assert np.isclose(dx_actual, mesh.dx)
+
+    for j in range(ny - 1):
+        for i in range(nx):
+            n1 = mesh.nodes[j, i]
+            n2 = mesh.nodes[j + 1, i]
+            if n1 is not None and n2 is not None:
+                dy_actual = n2.position[1] - n1.position[1]
+                assert np.isclose(dy_actual, mesh.dy)
+def test_u_face_is_between_neighbor_nodes(mesh):
+    mesh.construct_nodes()
+    mesh.construct_control_surfaces()
+    ny, nx = mesh.shape
+
+    for j in range(ny):
+        for i in range(nx - 1):
+            n1 = mesh.nodes[j, i]
+            n2 = mesh.nodes[j, i + 1]
+            u_face = mesh.u_faces[j, i]
+            if n1 is not None and n2 is not None and u_face is not None:
+                x_avg = 0.5 * (n1.position[0] + n2.position[0])
+                assert np.isclose(u_face.position[0], x_avg)
