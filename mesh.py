@@ -111,7 +111,7 @@ class Mesh():
                         x, y = node.position
                         x_vals.append(x)
                         y_vals.append(y)
-         
+        
         # Plot domain boundary
         x_bounds, y_bounds = self.domain.get_bounds()
         fig, ax = plt.subplots()
