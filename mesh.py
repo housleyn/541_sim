@@ -23,7 +23,7 @@ class Mesh():
         self.u_faces = np.empty((ny, nx - 1), dtype=ControlSurface)
         self.v_faces = np.empty((ny - 1, nx), dtype=ControlSurface)
 
-
+        self.build_valid_index_lists()
 
     def construct_nodes(self):
         x_bounds, y_bounds = self.domain.get_bounds()
@@ -93,6 +93,69 @@ class Mesh():
                     surf.position = (x, y)
                     surf.v = 0.0  # triggers orientation
                     self.v_faces[j, i] = surf
+
+    def build_valid_index_lists(self):
+        self.interior_node_indices = []
+        self.interior_nodes = []
+
+        self.u_face_indices = []
+        self.v_face_indices = []
+
+        self.left_node_indices = []
+        self.right_node_indices = []
+        self.top_node_indices = []
+        self.bottom_node_indices = []
+
+        if hasattr(self, "nodes"):
+            shape = self.nodes.shape
+
+            if len(shape) == 2:
+                ny, nx = shape
+                for j in range(ny):
+                    for i in range(nx):
+                        node = self.nodes[j, i]
+                        if node is not None:
+                            self.interior_node_indices.append((j, i))
+                            self.interior_nodes.append(node)
+
+                            if i == 0:
+                                self.left_node_indices.append((j, i))
+                            elif i == nx - 1:
+                                self.right_node_indices.append((j, i))
+                            if j == 0:
+                                self.bottom_node_indices.append((j, i))
+                            elif j == ny - 1:
+                                self.top_node_indices.append((j, i))
+
+            elif len(shape) == 1:
+                nx = shape[0]
+                for i in range(nx):
+                    node = self.nodes[i]
+                    if node is not None:
+                        self.interior_node_indices.append(i)
+                        self.interior_nodes.append(node)
+                        if i == 0:
+                            self.left_node_indices.append(i)
+                        elif i == nx - 1:
+                            self.right_node_indices.append(i)
+
+    
+    def get_boundary_node_indices(self, side):
+        if side == 'left':
+            return self.left_node_indices
+        elif side == 'right':
+            return self.right_node_indices
+        elif side == 'top':
+            return self.top_node_indices
+        elif side == 'bottom':
+            return self.bottom_node_indices
+        else:
+            raise ValueError(f"Unknown boundary side: {side}")
+    
+    def construct_mesh(self):
+        self.construct_nodes()
+        self.construct_control_surfaces()
+        self.build_valid_index_lists()
 
     def plot_mesh(self):
         x_vals = []

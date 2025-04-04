@@ -226,3 +226,52 @@ def test_u_face_is_between_neighbor_nodes(mesh):
             if n1 is not None and n2 is not None and u_face is not None:
                 x_avg = 0.5 * (n1.position[0] + n2.position[0])
                 assert np.isclose(u_face.position[0], x_avg)
+
+def test_valid_indices_are_physically_adjacent(mesh):
+    mesh.construct_nodes()
+    mesh.build_valid_index_lists()
+
+    if len(mesh.shape) == 1:
+        # 1D case
+        for idx in mesh.interior_node_indices:
+            if idx > 0 and idx - 1 in mesh.interior_node_indices:
+                left = mesh.nodes[idx - 1]
+                curr = mesh.nodes[idx]
+                if left is not None and curr is not None:
+                    dx = curr.position[0] - left.position[0]
+                    assert np.isclose(dx, mesh.dx)
+    else:
+        # 2D case
+        ny, nx = mesh.nodes.shape
+        for j, i in mesh.interior_node_indices:
+            curr = mesh.nodes[j, i]
+            if curr is None:
+                continue
+
+            # Check East neighbor
+            if i + 1 < nx and (j, i + 1) in mesh.interior_node_indices:
+                east = mesh.nodes[j, i + 1]
+                if east is not None:
+                    dx = east.position[0] - curr.position[0]
+                    assert np.isclose(dx, mesh.dx)
+
+            # Check West neighbor
+            if i - 1 >= 0 and (j, i - 1) in mesh.interior_node_indices:
+                west = mesh.nodes[j, i - 1]
+                if west is not None:
+                    dx = curr.position[0] - west.position[0]
+                    assert np.isclose(dx, mesh.dx)
+
+            # Check North neighbor
+            if j + 1 < ny and (j + 1, i) in mesh.interior_node_indices:
+                north = mesh.nodes[j + 1, i]
+                if north is not None:
+                    dy = north.position[1] - curr.position[1]
+                    assert np.isclose(dy, mesh.dy)
+
+            # Check South neighbor
+            if j - 1 >= 0 and (j - 1, i) in mesh.interior_node_indices:
+                south = mesh.nodes[j - 1, i]
+                if south is not None:
+                    dy = curr.position[1] - south.position[1]
+                    assert np.isclose(dy, mesh.dy)

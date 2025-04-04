@@ -19,69 +19,55 @@ class Boundary():
         self.lower_boundary = {'var': var, 'value': value, 'kind': kind}
 
     def apply(self):
-        
-        nodes = self.mesh.nodes
-        is_2d = len(nodes.shape) == 2
-        u_faces = self.mesh.u_faces
-        v_faces = self.mesh.v_faces
+        self.apply_pressure_boundary('left', self.left_boundary)
+        self.apply_pressure_boundary('right', self.right_boundary)
+        self.apply_pressure_boundary('top', self.upper_boundary)
+        self.apply_pressure_boundary('bottom', self.lower_boundary)
 
-        # LEFT boundary
-        if self.left_boundary:
-            var = self.left_boundary['var']
-            value = self.left_boundary['value']
-            if var == 'p':  # pressure stored at nodes
-                for j in range(nodes.shape[0]):
-                    node = nodes[j,0]
-                    if node is not None:
-                        node.aP = 1
+        self.apply_velocity_boundary('left', 'u', self.left_boundary)
+        self.apply_velocity_boundary('right', 'u', self.right_boundary)
+        self.apply_velocity_boundary('top', 'v', self.upper_boundary)
+        self.apply_velocity_boundary('bottom', 'v', self.lower_boundary)
+
+    def apply_pressure_boundary(self, side, bc):
+        if bc and bc['var'] == 'p':
+            indices = self.mesh.get_boundary_node_indices(side)
+
+            if len(self.mesh.shape) == 2:
+                # 2D: unpack j, i
+                for j, i in indices:
+                    node = self.mesh.nodes[j, i]
+                    node.aP = 1
+                    if side in ['left', 'right']:
                         node.aW = 0
                         node.aE = 0
-                        node.b = value
-            elif var == 'u':  # u velocity stored at control surface
-                for j in range(u_faces.shape[0]):
-                    if u_faces[j,0] is not None:
-                        u_faces[j,0].u = value
-                
+                    else:
+                        node.aN = 0
+                        node.aS = 0
+                    node.b = bc['value']
+            else:
+                # 1D: just i
+                for i in indices:
+                    node = self.mesh.nodes[i]
+                    node.aP = 1
+                    node.aW = 0
+                    node.aE = 0
+                    node.b = bc['value']
 
-        # RIGHT boundary
-        if self.right_boundary:
-            var = self.right_boundary['var']
-            value = self.right_boundary['value']
-            if var == 'p':
-                for j in range(nodes.shape[0]):
-                    node = nodes[j,-1]
-                    if node is not None:
-                        node.aP = 1
-                        node.aW = 0
-                        node.aE = 0
-                        node.b = value
-            elif var == 'u':
-                for j in range(u_faces.shape[0]):
-                    if u_faces[j,-1] is not None:
-                        u_faces[j,-1].u = value
 
-        # LOWER boundary (j=0 for all i)
-        if self.lower_boundary:
-            var, value = self.lower_boundary['var'], self.lower_boundary['value']
-            if var == 'p' and is_2d:
-                for i in range(nodes.shape[1]):
-                    node = nodes[0, i]
-                    if node is not None:
-                        node.aP = 1; node.aN = 0; node.aS = 0; node.b = value
+    def apply_velocity_boundary(self, side, var, bc):
+        if bc and bc['var'] == var:
+            if var == 'u':
+                face_array = self.mesh.u_faces
+                idx = 0 if side == 'left' else -1
+                for j in range(face_array.shape[0]):
+                    face = face_array[j, idx]
+                    if face is not None:
+                        face.u = bc['value']
             elif var == 'v':
-                for i in range(v_faces.shape[1]):
-                    if v_faces[0, i] is not None:
-                        v_faces[0, i].v = value
-
-        # UPPER boundary (j=ny-1 for all i)
-        if self.upper_boundary:
-            var, value = self.upper_boundary['var'], self.upper_boundary['value']
-            if var == 'p' and is_2d:
-                for i in range(nodes.shape[1]):
-                    node = nodes[-1, i]
-                    if node is not None:
-                        node.aP = 1; node.aN = 0; node.aS = 0; node.b = value
-            elif var == 'v':
-                for i in range(v_faces.shape[1]):
-                    if v_faces[-1, i] is not None:
-                        v_faces[-1, i].v = value
+                face_array = self.mesh.v_faces
+                idx = 0 if side == 'bottom' else -1
+                for i in range(face_array.shape[1]):
+                    face = face_array[idx, i]
+                    if face is not None:
+                        face.v = bc['value']
