@@ -33,7 +33,10 @@ class Mesh():
         for j in range(ny):
             for i in range(nx):
                 x = x_min + i * self.dx
-                y = y_min + j * self.dy if ny > 1 else 0.0
+                if is_2d:
+                    y = (y_min + j * self.dy) 
+                else:
+                    y = 0.0
                 if self.domain.is_inside(x, y):
                     node = Node()
                     node.position = (x, y)
