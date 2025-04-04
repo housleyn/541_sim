@@ -1,4 +1,5 @@
 from node import Node
+from control_surface import ControlSurface
 import numpy as np 
 import matplotlib.pyplot as plt
 
@@ -18,6 +19,9 @@ class Mesh():
 
         self.shape = (ny, nx) if dy else (nx,)  # 1D or 2D        
         self.nodes = np.empty(self.shape, dtype=Node)
+
+        self.u_faces = np.empty((ny, nx - 1), dtype=ControlSurface)
+        self.v_faces = np.empty((ny - 1, nx), dtype=ControlSurface)
 
 
 
@@ -50,7 +54,45 @@ class Mesh():
                     else:
                         self.nodes[i] = None
 
+    def construct_control_surfaces(self):
+        is_2d = len(self.shape) == 2
+        nx = self.shape[1] if is_2d else self.shape[0]
+        ny = self.shape[0] if is_2d else 1
 
+
+        x_bounds, y_bounds = self.domain.get_bounds()
+        x_min, y_min = x_bounds[0], y_bounds[0]
+
+        # u-surfaces (between nodes in x)
+        for j in range(ny):
+            for i in range(nx - 1):
+                n1 = self.nodes[j, i] if is_2d else self.nodes[i]
+                n2 = self.nodes[j, i + 1] if is_2d else self.nodes[i + 1]
+                if n1 is None or n2 is None:
+                    self.u_faces[j, i] = None if is_2d else None
+                    continue
+                surf = ControlSurface()
+                x = 0.5 * (n1.position[0] + n2.position[0])
+                y = 0.5 * (n1.position[1] + n2.position[1])
+                surf.position = (x, y)
+                surf.u = 0.0  # triggers orientation
+                self.u_faces[j, i] = surf if is_2d else None
+
+        # v-surfaces (between nodes in y)
+        if is_2d:
+            for j in range(ny - 1):
+                for i in range(nx):
+                    n1 = self.nodes[j, i]
+                    n2 = self.nodes[j + 1, i]
+                    if n1 is None or n2 is None:
+                        self.v_faces[j, i] = None
+                        continue
+                    surf = ControlSurface()
+                    x = 0.5 * (n1.position[0] + n2.position[0])
+                    y = 0.5 * (n1.position[1] + n2.position[1])
+                    surf.position = (x, y)
+                    surf.v = 0.0  # triggers orientation
+                    self.v_faces[j, i] = surf
 
     def plot_mesh(self):
         x_vals = []
@@ -69,7 +111,7 @@ class Mesh():
                         x, y = node.position
                         x_vals.append(x)
                         y_vals.append(y)
-
+         
         # Plot domain boundary
         x_bounds, y_bounds = self.domain.get_bounds()
         fig, ax = plt.subplots()

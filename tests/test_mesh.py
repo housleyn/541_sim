@@ -147,3 +147,23 @@ def test_uniform_spacing_x_and_y(mesh):
                 assert np.isclose(dy, mesh.dy)
 
 
+def test_construct_control_surfaces(mesh):
+    mesh.construct_nodes()
+    mesh.construct_control_surfaces()
+    assert mesh.u_faces.shape == (6, 20)
+    assert mesh.v_faces.shape == (5, 21)
+
+
+def test_control_surface_positions_u(mesh):
+    mesh.construct_nodes()
+    mesh.construct_control_surfaces()
+    assert np.isclose(mesh.u_faces[3,0].position, (.05, 0.05)).all()
+    assert np.isclose(mesh.u_faces[3, 1].position, (.15, .05)).all()
+    assert np.isclose(mesh.u_faces[1, 1].position, (0.15, -0.15)).all()
+
+def test_control_surface_positions_v(mesh):
+    mesh.construct_nodes()
+    mesh.construct_control_surfaces()
+    assert np.isclose(mesh.v_faces[0, 0].position, (0.0, -0.2)).all()
+    assert np.isclose(mesh.v_faces[1, 1].position, (0.1, -0.1)).all()
+    assert np.isclose(mesh.v_faces[3, 2].position, (0.2, 0.1)).all()
