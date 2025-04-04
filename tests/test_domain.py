@@ -50,3 +50,8 @@ def test_is_inside(domain):
     assert domain.is_inside(-1, 0) == False
     assert domain.is_inside(0, .2) == True #on boundary 
     assert domain.is_inside(1, .15) == True #on boundary)
+
+def test_get_bounds(domain): 
+    x_bounds, y_bounds = domain.get_bounds()
+    assert x_bounds == (0, 2)
+    assert y_bounds == (-0.25, 0.25)

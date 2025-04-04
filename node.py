@@ -7,6 +7,7 @@ class Node():
         self.aS = None 
         self.b = None 
         self.P = None
+        self.position = None 
 
     def define_coefficients(self, De, Fe, Dw, Fw, Dn, Fn, Ds, Fs, Sc, Sp, dx, dy):
         self.aE = De + max(-Fe,0)

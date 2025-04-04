@@ -27,6 +27,19 @@ class Domain():
         if self.left_boundary_func(y, x) > x: return False   # left of left
         if self.right_boundary_func(y, x) < x: return False  # right of right
         return True
+    
+    def get_bounds(self, x_samples=100, y_samples=100):
+        x_min = self.left_boundary_func(0, 0)
+        x_max = self.right_boundary_func(0, 0)
+
+        x_vals = np.linspace(x_min, x_max, x_samples)
+        y_lower_vals = np.array([self.lower_boundary_func(x, 0) for x in x_vals])
+        y_upper_vals = np.array([self.upper_boundary_func(x, 0) for x in x_vals])
+        y_min = min(y_lower_vals.min(), y_upper_vals.min())
+        y_max = max(y_lower_vals.max(), y_upper_vals.max())
+
+        return (x_min, x_max), (y_min, y_max)
+
 
 
     def plot_domain(self, x_range, y_range):
@@ -56,7 +69,7 @@ class Domain():
         plt.title('Domain with Boundaries')
         plt.grid()
         plt.axis('equal')
-        plt.show()
+        # plt.show()
 
 
 
