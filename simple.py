@@ -19,7 +19,16 @@ class SIMPLE():
         self.p_star_new = np.zeros_like(self.p_star_old)
         self.p_prime = np.zeros_like(self.p_star_old)
 
+        self.dx = mesh.dx
+        self.dy = mesh.dy if is_2d else 1.0
+        self.alph_u = .7
+        self.alpha_v = .3 
 
+    def calculate_diffusion_terms(self):
+        De = Dw = self.mu / self.dx 
+        Dn = Ds = self.mu / self.dy if len(self.mesh.shape) == 2 else 0.0
+        return De, Dw, Dn, Ds 
+    
     def generate_initial_guesses(self):
         self.u_star_old = 
         if self.v_star_old is not None:
@@ -27,13 +36,17 @@ class SIMPLE():
         self.p_star_old =
     
     def solve_discretized_x_momentum(self):
-        is_2d = len(self.mesh.shape) == 2
-        ny, nx = self.mesh.shape if is_2d else (1, self.mesh.shape[0])
-        for j in range(ny):
-            for i in range(nx-1):
-                Fs = #part 3 notes
+        dx, dy , rho, mu = self.dx, self.dy, self.rho, self.mu
+        De, Dw, Dn, Ds = self.calculate_diffusion_terms()
+        for j, i in self.mesh.u_face_indices:
+            Fe = (self.rho/2) * (self.u_star_old[j,i+1] + self.u_star_old[j,i])
+            Fw = (self.rho/2) * (self.u_star_old[j,i] + self.u_star_old[j,i-1])
+            Fn = (self.rho/2) * (self.v_star_old[j+1,i] + self.v_star_old[j+1,i-1]) if self.v_star_old is not None else 0.0
+            Fs = (self.rho/2) * (self.v_star_old[j,i] + self.v_star_old[j,i-1]) if self.v_star_old is not None else 0.0
+            #I'm stuck, I need to read all the files.
+            
 
-        self.u_star_new = 
+        
     
     def solve_discretized_y_momentum(self):
         self.v_star_new =
@@ -54,6 +67,9 @@ class SIMPLE():
         if self.v_star_old is not None:
             self.v_star_old = self.v_star_new
         self.p_star_old = self.p_new
+    
+    
+
 
     def run(self): #iterate until convergence
         is_2d = len(self.mesh.shape) == 2
