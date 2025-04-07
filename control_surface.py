@@ -11,6 +11,8 @@ class ControlSurface:
         self.aN = None
         self.aS = None
         self.aP = None
+        self.u_old = None
+        self.v_old = None
 
     @property
     def u(self):
@@ -31,9 +33,19 @@ class ControlSurface:
         self.orientation = 'horizontal'  # v is aligned with y-direction → horizontal face
 
 
-    #following this has not been tested
-    def calculate_x_coefficients(self, dx, dy, De, Fe, Dw, Fw, Dn, Fn, Ds, Fs, is_2d):
+  
+    def calculate_x_coefficients(self, dx, dy, De, Fe, Dw, Fw, Dn, Fn, Ds, Fs,pe, pw, alphau,  is_2d):
         self.aE = De * dy + max(-Fe, 0)*dy 
         self.aW = Dw*dy + max(Fw,0)*dy 
         self.aN = Dn*dx + max(-Fn,0)*dx if is_2d else None
         self.aS = Ds*dx + max(Fs,0)*dx if is_2d else None
+        self.aP = self.aE + self.aW + self.aN + self.aS + (Fe-Fw)*dy + (Fn-Fs)*dx 
+        self.b = (pe-pw)*dy + ((1-alphau)*self.aP/alphau)*self.u_old
+
+    def calculate_y_coefficients(self, dx, dy, De, Fe, Dw, Fw, Dn, Fn, Ds, Fs, ps, pn, alphav, is_2d):
+        self.aE = De * dy + max(-Fe, 0)*dy if is_2d else None
+        self.aW = Dw*dy + max(Fw,0)*dy if is_2d else None
+        self.aN = Dn*dx + max(-Fn,0)*dx 
+        self.aS = Ds*dx + max(Fs,0)*dx
+        self.aP = self.aE + self.aW + self.aN + self.aS + (Fe-Fw)*dy + (Fn-Fs)*dx 
+        self.b = (ps-pn)*dx + ((1-alphav)*self.aP/alphav)*self.v_old
