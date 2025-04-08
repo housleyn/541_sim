@@ -104,7 +104,7 @@ class SIMPLE():
             pw = self.p_star_old[j, i-1] 
 
             face.u_old = self.u_star_old[j, i]
-            face.calculate_x_coefficients(dx[i], dy[j], De, Fe, Dw, Fw, Dn, Fn, Ds, Fs, pe, pw, self.alpha_u, is_2d)
+            face.calculate_x_coefficients(dx[0], dy[j], De, Fe, Dw, Fw, Dn, Fn, Ds, Fs, pe, pw, self.alpha_u, is_2d)
 
         # now solve A * u = b
         self.mesh.alpha_u = self.alpha_u
@@ -141,7 +141,7 @@ class SIMPLE():
             ps = self.p_star_old[j, i] if j < self.p_star_old.shape[0] else 0.0
 
             face.v_old = self.v_star_old[j, i]
-            face.calculate_y_coefficients(dx[i], dy[j], De, Fe, Dw, Fw, Dn, Fn, Ds, Fs, ps, pn, self.alpha_v, is_2d)
+            face.calculate_y_coefficients(dx[0], dy[j], De, Fe, Dw, Fw, Dn, Fn, Ds, Fs, ps, pn, self.alpha_v, is_2d)
 
         # now solve A * v = b
         self.mesh.alpha_u = self.alpha_u
@@ -248,7 +248,7 @@ class SIMPLE():
                 aP = self.mesh.v_faces[j, i].aP if self.mesh.v_faces[j, i].aP else 1e-12
 
                 # Use dx[i] to index the appropriate value of dx for each column i
-                self.v_star_new[j, i] += dx[i] * dp / (rho * aP)
+                self.v_star_new[j, i] += dx[0] * dp / (rho * aP)
 
 
 
@@ -258,31 +258,24 @@ class SIMPLE():
             self.v_star_old = self.v_star_new.copy()
         self.p_star_old = self.p_star_new.copy()
     
+    
+
     def print_and_plot_fields(self):
-        # Check for 1D or 2D mesh
-        is_2d = len(self.mesh.shape) == 2
-
-        # --- u-face velocities ---
-        print("--- u-face velocities ---")
-        for j, i in self.mesh.u_face_indices:
-            face = self.mesh.u_faces[j, i]
-            if face is not None:
-                print(f"u[{j}, {i}] = {face.u_old}")
-
-        # --- pressure nodes ---
         print("--- pressure nodes ---")
-        if is_2d:
-            for j, i in self.mesh.interior_node_indices:
-                p = self.p_star_new[j, i]  # For 2D mesh, use both indices
-                x_position = self.mesh.nodes[j, i].position[0]  # Get the x-position of the node
-                print(f"p[{j}, {i}] at x={x_position}: {p}")
-        else:
-            for i in range(self.mesh.shape[0]):  # For 1D mesh, iterate over the single dimension
-                p = self.p_star_new[i]  # Access pressure for 1D
-                x_position = self.mesh.nodes[i].position[0]  # Get the x-position of the node
-                print(f"p[{i}] at x={x_position}: {p}")
 
-        # Optionally, plot the fields here if needed
+        pressure_values = self.p_star_new[0]  # 1D pressure array
+        x_positions = [self.mesh.nodes[i].position[0] for i in range(self.mesh.nx)]
+
+        for i, (x, p) in enumerate(zip(x_positions, pressure_values)):
+            print(f"p[{i}] at x={x:.2f}: {p:.4f}")
+
+        plt.plot(x_positions, pressure_values, marker='o', color='blue')
+        plt.xlabel("x-position")
+        plt.ylabel("Pressure")
+        plt.title("Final Pressure Distribution")
+        plt.grid(True)
+        plt.show()
+
 
 
 
