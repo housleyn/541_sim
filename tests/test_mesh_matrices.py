@@ -19,7 +19,7 @@ def domain():
 
 @pytest.fixture
 def mesh(domain):
-    m = Mesh(domain, dx=0.1, dy=0.1)
+    m = Mesh(domain, nx=20, ny=2)
     return m
 
 

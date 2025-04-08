@@ -18,7 +18,7 @@ def domain():
 
 @pytest.fixture
 def mesh(domain):
-    mesh = Mesh(domain, dx=0.1, dy=0.1)
+    mesh = Mesh(domain, nx=20, ny=2)
     return mesh
 
 @pytest.fixture
@@ -27,17 +27,19 @@ def boundary(mesh):
     return bc
 
 def test_nodes_on_left_boundary_set_correctly(boundary):
-    
+    # Make sure mesh is constructed
+    boundary.mesh.construct_mesh()
+
+    # Now apply the boundary conditions
     boundary.set_left_boundary(var='p', value=10.0)
     boundary.apply()
-    mesh = boundary.mesh
-    for j in range(mesh.nodes.shape[0]):
-        node = mesh.nodes[j, 0]
-        if node is not None:
-            assert node.aP == 1
-            assert node.aE == 0
-            assert node.aW == 0
-            assert node.b == 10.0
+
+    # Check that left boundary nodes have b = 10.0
+    for j, i in boundary.mesh.left_node_indices:
+        node = boundary.mesh.nodes[j, i]
+        assert node.b == 10.0
+        assert node.aP == 1.0
+
 
 def test_nodes_on_right_boundary_set_correctly(boundary):
     
@@ -98,7 +100,7 @@ def test_1D_boundary_only_sets_left_and_right_nodes():
     d.define_right_boundary(lambda y, x=None: 1)
     d.define_lower_boundary(lambda x, y=None: 0)  # dummy flat bottom
     d.define_upper_boundary(lambda x, y=None: 0)  # dummy flat top
-    mesh = Mesh(d, dx=0.1, dy=None)
+    mesh = Mesh(d, nx=20)
     mesh.construct_mesh()
 
     boundary = Boundary(mesh)

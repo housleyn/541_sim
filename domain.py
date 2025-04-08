@@ -29,8 +29,10 @@ class Domain():
         return True
     
     def get_bounds(self, x_samples=100, y_samples=100):
-        x_min = self.left_boundary_func(0, 0)
-        x_max = self.right_boundary_func(0, 0)
+        self.x_min = self.left_boundary_func(0, 0)
+        self.x_max = self.right_boundary_func(0, 0)
+        x_min = self.x_min
+        x_max = self.x_max
 
         x_vals = np.linspace(x_min, x_max, x_samples)
         y_lower_vals = np.array([self.lower_boundary_func(x, 0) for x in x_vals])
