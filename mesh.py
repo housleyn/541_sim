@@ -11,6 +11,8 @@ class Mesh():
         self.dx = dx 
         self.dy = dy
         self.shape = np.zeros
+        self.alpha_u = None
+        self.alpha_v = None
         
         x_bounds, y_bounds = self.domain.get_bounds()
         x_min, x_max = x_bounds
@@ -134,7 +136,8 @@ class Mesh():
                     b[k] = obj.p if obj.p is not None else 0.0
                 continue
 
-            A[k, k] = obj.aP if obj.aP is not None else 1e-12
+            relax = self.alph_u if var_type == 'u' else self.alph_v if var_type == 'v' else 1.0
+            A[k, k] = (obj.aP / relax) if obj.aP is not None else 1e-12
             b[k] = obj.b if obj.b is not None else 0.0
 
             neighbors = {
