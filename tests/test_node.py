@@ -16,7 +16,7 @@ def test_node_class_initialized_correctly(node):
     assert node.aN is None 
     assert node.aS is None 
     assert node.b is None 
-    assert node.P is None
+    assert node.p is None
 
 def test_define_pressure_correction_coefficients(node):
     rho = 1000

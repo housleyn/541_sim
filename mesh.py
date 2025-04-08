@@ -2,6 +2,8 @@ from node import Node
 from control_surface import ControlSurface
 import numpy as np 
 import matplotlib.pyplot as plt
+import scipy
+from scipy.sparse import lil_matrix, csr_matrix
 
 class Mesh():
     def __init__(self, domain, dx=None, dy=None):
@@ -93,6 +95,63 @@ class Mesh():
                     surf.position = (x, y)
                     surf.v = 0.0  # triggers orientation
                     self.v_faces[j, i] = surf
+
+
+
+    def build_A_matrix(self, var_type):
+        if var_type == 'u':
+            face_array = self.u_faces
+            indices = list(self.u_face_indices)
+        elif var_type == 'v':
+            if len(self.shape) == 1:
+                return None, None
+            face_array = self.v_faces
+            indices = list(self.v_face_indices)
+        elif var_type == 'p':
+            face_array = self.nodes
+            indices = list(np.ndindex(self.nodes.shape))
+        else:
+            raise ValueError(f"Unknown variable type: {var_type}")
+
+        N = len(indices)
+        A = lil_matrix((N, N))
+        b = np.zeros(N)
+        index_map = {idx: k for k, idx in enumerate(indices)}
+
+        for k, idx in enumerate(indices):
+            obj = face_array[idx]
+            if obj is None:
+                continue
+
+            # Handle Dirichlet BC directly
+            if hasattr(obj, "bc_type") and obj.bc_type == "Dirichlet":
+                A[k, k] = 1.0
+                if var_type == 'u':
+                    b[k] = obj.u if obj.u is not None else 0.0
+                elif var_type == 'v':
+                    b[k] = obj.v if obj.v is not None else 0.0
+                elif var_type == 'p':
+                    b[k] = obj.p if obj.p is not None else 0.0
+                continue
+
+            A[k, k] = obj.aP if obj.aP is not None else 1e-12
+            b[k] = obj.b if obj.b is not None else 0.0
+
+            neighbors = {
+                'aE': (idx[0], idx[1] + 1),
+                'aW': (idx[0], idx[1] - 1),
+                'aN': (idx[0] + 1, idx[1]),
+                'aS': (idx[0] - 1, idx[1])
+            }
+
+            for coeff_name, neighbor_idx in neighbors.items():
+                coeff = getattr(obj, coeff_name, None)
+                if coeff is not None and neighbor_idx in index_map:
+                    A[k, index_map[neighbor_idx]] = -coeff
+
+        return csr_matrix(A), b
+
+
 
     def build_valid_index_lists(self):
         self.interior_node_indices = []
